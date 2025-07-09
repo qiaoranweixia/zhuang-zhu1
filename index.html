@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>专注计时器 - 完整修复版</title>
+    <title>专注计时器 - 高级音色定制版</title>
     <style>
         * {
             margin: 0;
@@ -28,7 +28,7 @@
             border-radius: 20px;
             box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8);
             padding: 30px;
-            max-width: 900px;
+            max-width: 1000px;
             width: 100%;
             text-align: center;
             backdrop-filter: blur(10px);
@@ -137,6 +137,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
             z-index: 5;
+            cursor: pointer;
         }
         
         .progress-bar {
@@ -146,6 +147,20 @@
             width: 0%;
             transition: width 0.5s ease;
             box-shadow: 0 0 15px rgba(255, 106, 136, 0.7);
+            position: relative;
+        }
+        
+        .progress-handle {
+            position: absolute;
+            right: -10px;
+            top: -5px;
+            width: 20px;
+            height: 40px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            cursor: grab;
+            z-index: 10;
         }
         
         .stats {
@@ -447,6 +462,140 @@
                 transform: translateY(-100px) rotate(360deg);
             }
         }
+        
+        .sound-customization {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 5;
+            display: none;
+        }
+        
+        .sound-customization.active {
+            display: block;
+        }
+        
+        .sound-param {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 8px;
+        }
+        
+        .slider-container label {
+            min-width: 150px;
+            text-align: left;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00c9ff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 201, 255, 0.7);
+        }
+        
+        .sound-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .preset-btn {
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .preset-btn:hover {
+            background: rgba(0, 201, 255, 0.3);
+        }
+        
+        .sound-test-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .sound-test-btn {
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sound-test-btn:hover {
+            background: rgba(0, 201, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .sound-type-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .sound-type-btn {
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sound-type-btn.active {
+            background: rgba(0, 201, 255, 0.4);
+            border: 1px solid #00c9ff;
+            box-shadow: 0 0 15px rgba(0, 201, 255, 0.5);
+        }
+        
+        .harmonics-controls {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .harmonic-row {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .harmonic-label {
+            width: 120px;
+        }
     </style>
 </head>
 <body>
@@ -455,16 +604,18 @@
     <div class="container">
         <header>
             <h1>专注计时器</h1>
-            <p class="subtitle">已修复10秒休息后计时器问题</p>
-            <p class="subtitle">科学时间管理，提升工作效率</p>
+            <p class="subtitle">高级音色定制版</p>
+            <p class="subtitle">长休息和短休息使用不同音效</p>
         </header>
         
         <div class="timer-display" id="timer">90:00</div>
         
         <div class="status work" id="status">准备开始专注</div>
         
-        <div class="progress-container">
-            <div class="progress-bar" id="progress-bar"></div>
+        <div class="progress-container" id="progress-container">
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-handle" id="progress-handle"></div>
+            </div>
         </div>
         
         <div class="stats">
@@ -491,7 +642,7 @@
             <div class="sound-toggle active" id="sound-toggle">
                 <div class="toggle-knob"></div>
             </div>
-            <span>当前音效: <span id="current-sound">钢琴</span></span>
+            <span>当前模式: <span id="current-mode">工作</span></span>
         </div>
         
         <div class="sound-selector">
@@ -502,10 +653,86 @@
             <div class="sound-option" data-sound="gong">铜锣</div>
         </div>
         
+        <div class="sound-customization" id="sound-customization">
+            <div class="sound-type-selector">
+                <div class="sound-type-btn active" data-type="work">工作音效</div>
+                <div class="sound-type-btn" data-type="shortBreak">短休息音效</div>
+                <div class="sound-type-btn" data-type="longBreak">长休息音效</div>
+            </div>
+            
+            <h3>基础音色参数</h3>
+            <div class="sound-param">
+                <div class="slider-container">
+                    <label for="volume">音量:</label>
+                    <input type="range" id="volume" min="0" max="100" value="80">
+                    <span id="volume-value">80%</span>
+                </div>
+            </div>
+            <div class="sound-param">
+                <div class="slider-container">
+                    <label for="pitch">基音频率:</label>
+                    <input type="range" id="pitch" min="0" max="100" value="50">
+                    <span id="pitch-value">中音</span>
+                </div>
+            </div>
+            <div class="sound-param">
+                <div class="slider-container">
+                    <label for="decay">衰减时间:</label>
+                    <input type="range" id="decay" min="0" max="100" value="60">
+                    <span id="decay-value">中等</span>
+                </div>
+            </div>
+            <div class="sound-param">
+                <div class="slider-container">
+                    <label for="brightness">明亮度:</label>
+                    <input type="range" id="brightness" min="0" max="100" value="70">
+                    <span id="brightness-value">明亮</span>
+                </div>
+            </div>
+            
+            <div class="harmonics-controls" id="harmonics-controls">
+                <h3>泛音控制</h3>
+                <div class="harmonic-row">
+                    <div class="harmonic-label">泛音1 (2x基频):</div>
+                    <input type="range" class="harmonic-gain" min="0" max="100" value="40">
+                    <span class="harmonic-value">40%</span>
+                </div>
+                <div class="harmonic-row">
+                    <div class="harmonic-label">泛音2 (3x基频):</div>
+                    <input type="range" class="harmonic-gain" min="0" max="100" value="30">
+                    <span class="harmonic-value">30%</span>
+                </div>
+                <div class="harmonic-row">
+                    <div class="harmonic-label">泛音3 (4x基频):</div>
+                    <input type="range" class="harmonic-gain" min="0" max="100" value="20">
+                    <span class="harmonic-value">20%</span>
+                </div>
+                <div class="harmonic-row">
+                    <div class="harmonic-label">泛音4 (5x基频):</div>
+                    <input type="range" class="harmonic-gain" min="0" max="100" value="10">
+                    <span class="harmonic-value">10%</span>
+                </div>
+            </div>
+            
+            <div class="sound-presets">
+                <div class="preset-btn" data-preset="default">默认设置</div>
+                <div class="preset-btn" data-preset="soft">柔和音色</div>
+                <div class="preset-btn" data-preset="bright">明亮音色</div>
+                <div class="preset-btn" data-preset="piano">钢琴预设</div>
+                <div class="preset-btn" data-preset="bell">铃铛预设</div>
+            </div>
+        </div>
+        
+        <div class="sound-test-container">
+            <div class="sound-test-btn" id="test-sound">测试当前声音</div>
+            <div class="sound-test-btn" id="save-sound">保存音色设置</div>
+            <div class="sound-test-btn" id="reset-sound">重置音色设置</div>
+        </div>
+        
         <div class="controls">
             <button id="start-btn">开始专注</button>
             <button class="secondary" id="reset-btn">重置</button>
-            <button class="tertiary" id="sound-test">测试声音</button>
+            <button class="tertiary" id="customize-btn">音色自定义</button>
         </div>
         
         <div class="settings">
@@ -534,11 +761,38 @@
     <script>
         // 音频上下文和振荡器
         let audioContext;
-        let oscillator = null;
-        let gainNode = null;
+        let oscillators = [];
         let soundEnabled = true;
-        let currentSound = 'piano';
+        let currentSoundType = 'work'; // work, shortBreak, longBreak
         let sessionCount = 0;
+        
+        // 音色参数 (为每种事件类型分别存储)
+        let soundParams = {
+            work: {
+                type: 'piano',
+                volume: 80,
+                pitch: 50,
+                decay: 60,
+                brightness: 70,
+                harmonics: [40, 30, 20, 10]
+            },
+            shortBreak: {
+                type: 'bell',
+                volume: 70,
+                pitch: 70,
+                decay: 40,
+                brightness: 80,
+                harmonics: [30, 20, 10, 5]
+            },
+            longBreak: {
+                type: 'gong',
+                volume: 90,
+                pitch: 30,
+                decay: 90,
+                brightness: 60,
+                harmonics: [50, 40, 30, 20]
+            }
+        };
         
         // 状态变量
         let isRunning = false;
@@ -558,9 +812,11 @@
         const timerDisplay = document.getElementById('timer');
         const statusDisplay = document.getElementById('status');
         const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const progressHandle = document.getElementById('progress-handle');
         const startBtn = document.getElementById('start-btn');
         const resetBtn = document.getElementById('reset-btn');
-        const soundTestBtn = document.getElementById('sound-test');
+        const customizeBtn = document.getElementById('customize-btn');
         const notification = document.getElementById('notification');
         const workTimeInput = document.getElementById('work-time');
         const restTimeInput = document.getElementById('rest-time');
@@ -571,9 +827,26 @@
         const promptIntervalDisplay = document.getElementById('prompt-interval');
         const sessionCountDisplay = document.getElementById('session-count');
         const soundToggle = document.getElementById('sound-toggle');
-        const currentSoundDisplay = document.getElementById('current-sound');
+        const currentModeDisplay = document.getElementById('current-mode');
         const soundOptions = document.querySelectorAll('.sound-option');
         const particlesContainer = document.getElementById('particles');
+        const soundCustomization = document.getElementById('sound-customization');
+        const volumeSlider = document.getElementById('volume');
+        const volumeValue = document.getElementById('volume-value');
+        const pitchSlider = document.getElementById('pitch');
+        const pitchValue = document.getElementById('pitch-value');
+        const decaySlider = document.getElementById('decay');
+        const decayValue = document.getElementById('decay-value');
+        const brightnessSlider = document.getElementById('brightness');
+        const brightnessValue = document.getElementById('brightness-value');
+        const testSoundBtn = document.getElementById('test-sound');
+        const saveSoundBtn = document.getElementById('save-sound');
+        const resetSoundBtn = document.getElementById('reset-sound');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const soundTypeBtns = document.querySelectorAll('.sound-type-btn');
+        const harmonicGainSliders = document.querySelectorAll('.harmonic-gain');
+        const harmonicValues = document.querySelectorAll('.harmonic-value');
+        const harmonicsControls = document.getElementById('harmonics-controls');
         
         // 初始化
         function init() {
@@ -582,6 +855,7 @@
             initAudioContext();
             updateSessionCount();
             createParticles();
+            updateSoundParamsDisplay();
         }
         
         // 创建粒子背景
@@ -616,8 +890,15 @@
         function setupEventListeners() {
             startBtn.addEventListener('click', toggleTimer);
             resetBtn.addEventListener('click', resetTimer);
-            soundTestBtn.addEventListener('click', testSound);
+            customizeBtn.addEventListener('click', toggleCustomization);
             soundToggle.addEventListener('click', toggleSound);
+            testSoundBtn.addEventListener('click', testSound);
+            saveSoundBtn.addEventListener('click', saveSoundSettings);
+            resetSoundBtn.addEventListener('click', resetSoundSettings);
+            
+            // 进度条拖拽事件
+            progressContainer.addEventListener('click', handleProgressClick);
+            progressHandle.addEventListener('mousedown', startDrag);
             
             // 设置更改事件
             workTimeInput.addEventListener('change', updateSettings);
@@ -630,11 +911,295 @@
                 option.addEventListener('click', () => {
                     soundOptions.forEach(opt => opt.classList.remove('active'));
                     option.classList.add('active');
-                    currentSound = option.dataset.sound;
-                    currentSoundDisplay.textContent = option.textContent;
+                    soundParams[currentSoundType].type = option.dataset.sound;
+                    updateSoundTypeDisplay();
                     showNotification(`已选择音效: ${option.textContent}`);
                 });
             });
+            
+            // 参数滑块事件
+            volumeSlider.addEventListener('input', updateSoundParam);
+            pitchSlider.addEventListener('input', updateSoundParam);
+            decaySlider.addEventListener('input', updateSoundParam);
+            brightnessSlider.addEventListener('input', updateSoundParam);
+            
+            // 泛音滑块事件
+            harmonicGainSliders.forEach((slider, index) => {
+                slider.addEventListener('input', () => {
+                    soundParams[currentSoundType].harmonics[index] = parseInt(slider.value);
+                    harmonicValues[index].textContent = `${slider.value}%`;
+                });
+            });
+            
+            // 预设按钮事件
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = btn.dataset.preset;
+                    applyPreset(preset);
+                    showNotification(`已应用预设: ${btn.textContent}`);
+                });
+            });
+            
+            // 音效类型按钮事件
+            soundTypeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    soundTypeBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentSoundType = btn.dataset.type;
+                    updateSoundTypeDisplay();
+                    updateSoundParamsDisplay();
+                    updateHarmonicsDisplay();
+                    
+                    // 更新当前模式显示
+                    let modeName = "工作";
+                    if (currentSoundType === 'shortBreak') modeName = "短休息";
+                    else if (currentSoundType === 'longBreak') modeName = "长休息";
+                    currentModeDisplay.textContent = modeName;
+                });
+            });
+        }
+        
+        // 更新音效类型显示
+        function updateSoundTypeDisplay() {
+            // 更新声音选择器
+            const currentType = soundParams[currentSoundType].type;
+            soundOptions.forEach(option => {
+                if (option.dataset.sound === currentType) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+            
+            // 根据音效类型显示/隐藏泛音控制
+            if (currentType === 'piano' || currentType === 'gong') {
+                harmonicsControls.style.display = 'block';
+            } else {
+                harmonicsControls.style.display = 'none';
+            }
+        }
+        
+        // 切换音色自定义面板
+        function toggleCustomization() {
+            soundCustomization.classList.toggle('active');
+            customizeBtn.textContent = soundCustomization.classList.contains('active') ? 
+                "关闭自定义" : "音色自定义";
+        }
+        
+        // 更新音色参数
+        function updateSoundParam(e) {
+            const param = e.target.id;
+            const value = parseInt(e.target.value);
+            
+            soundParams[currentSoundType][param] = value;
+            updateSoundParamsDisplay();
+        }
+        
+        // 更新音色参数显示
+        function updateSoundParamsDisplay() {
+            const params = soundParams[currentSoundType];
+            
+            volumeValue.textContent = `${params.volume}%`;
+            
+            // 音高描述
+            if (params.pitch < 20) pitchValue.textContent = "低音";
+            else if (params.pitch < 40) pitchValue.textContent = "中低音";
+            else if (params.pitch < 60) pitchValue.textContent = "中音";
+            else if (params.pitch < 80) pitchValue.textContent = "中高音";
+            else pitchValue.textContent = "高音";
+            
+            // 衰减时间描述
+            if (params.decay < 20) decayValue.textContent = "很短";
+            else if (params.decay < 40) decayValue.textContent = "较短";
+            else if (params.decay < 60) decayValue.textContent = "中等";
+            else if (params.decay < 80) decayValue.textContent = "较长";
+            else decayValue.textContent = "很长";
+            
+            // 明亮度描述
+            if (params.brightness < 20) brightnessValue.textContent = "柔和";
+            else if (params.brightness < 40) brightnessValue.textContent = "较柔和";
+            else if (params.brightness < 60) brightnessValue.textContent = "中等";
+            else if (params.brightness < 80) brightnessValue.textContent = "较明亮";
+            else brightnessValue.textContent = "明亮";
+            
+            // 更新滑块值
+            volumeSlider.value = params.volume;
+            pitchSlider.value = params.pitch;
+            decaySlider.value = params.decay;
+            brightnessSlider.value = params.brightness;
+        }
+        
+        // 更新泛音显示
+        function updateHarmonicsDisplay() {
+            const harmonics = soundParams[currentSoundType].harmonics;
+            harmonicGainSliders.forEach((slider, index) => {
+                slider.value = harmonics[index];
+                harmonicValues[index].textContent = `${harmonics[index]}%`;
+            });
+        }
+        
+        // 应用预设
+        function applyPreset(preset) {
+            const params = soundParams[currentSoundType];
+            
+            switch(preset) {
+                case 'soft':
+                    params.volume = 70;
+                    params.pitch = 30;
+                    params.decay = 70;
+                    params.brightness = 40;
+                    params.harmonics = [30, 20, 10, 5];
+                    break;
+                case 'bright':
+                    params.volume = 90;
+                    params.pitch = 70;
+                    params.decay = 50;
+                    params.brightness = 90;
+                    params.harmonics = [50, 40, 30, 20];
+                    break;
+                case 'piano':
+                    params.volume = 80;
+                    params.pitch = 50;
+                    params.decay = 60;
+                    params.brightness = 70;
+                    params.harmonics = [40, 30, 20, 10];
+                    break;
+                case 'bell':
+                    params.volume = 85;
+                    params.pitch = 80;
+                    params.decay = 40;
+                    params.brightness = 85;
+                    params.harmonics = [30, 20, 10, 5];
+                    break;
+                case 'default':
+                default:
+                    params.volume = 80;
+                    params.pitch = 50;
+                    params.decay = 60;
+                    params.brightness = 70;
+                    params.harmonics = [40, 30, 20, 10];
+            }
+            
+            updateSoundParamsDisplay();
+            updateHarmonicsDisplay();
+        }
+        
+        // 保存音色设置
+        function saveSoundSettings() {
+            localStorage.setItem('soundParams', JSON.stringify(soundParams));
+            showNotification("音色设置已保存");
+        }
+        
+        // 重置音色设置
+        function resetSoundSettings() {
+            // 重置为默认设置
+            soundParams = {
+                work: {
+                    type: 'piano',
+                    volume: 80,
+                    pitch: 50,
+                    decay: 60,
+                    brightness: 70,
+                    harmonics: [40, 30, 20, 10]
+                },
+                shortBreak: {
+                    type: 'bell',
+                    volume: 70,
+                    pitch: 70,
+                    decay: 40,
+                    brightness: 80,
+                    harmonics: [30, 20, 10, 5]
+                },
+                longBreak: {
+                    type: 'gong',
+                    volume: 90,
+                    pitch: 30,
+                    decay: 90,
+                    brightness: 60,
+                    harmonics: [50, 40, 30, 20]
+                }
+            };
+            
+            updateSoundTypeDisplay();
+            updateSoundParamsDisplay();
+            updateHarmonicsDisplay();
+            showNotification("音色设置已重置");
+        }
+        
+        // 开始拖拽进度条
+        function startDrag(e) {
+            e.preventDefault();
+            document.addEventListener('mousemove', handleDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+        
+        // 处理拖拽
+        function handleDrag(e) {
+            e.preventDefault();
+            const containerRect = progressContainer.getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            const clickX = e.clientX - containerRect.left;
+            let progress = (clickX / containerWidth) * 100;
+            
+            // 限制在0-100之间
+            progress = Math.max(0, Math.min(100, progress));
+            
+            // 更新进度条
+            progressBar.style.width = `${progress}%`;
+            
+            // 更新时间显示
+            const totalDuration = isWorkSession ? workDuration : restDuration;
+            const newTimeLeft = Math.round(totalDuration * (1 - progress / 100));
+            updateTimerDisplay(newTimeLeft);
+            
+            // 更新实际时间
+            timeLeft = newTimeLeft;
+            
+            // 更新开始时间
+            if (isRunning) {
+                if (isWorkSession) {
+                    workStartTime = Date.now() - (workDuration - timeLeft) * 1000;
+                } else {
+                    breakStartTime = Date.now() - (restDuration - timeLeft) * 1000;
+                }
+            }
+        }
+        
+        // 停止拖拽
+        function stopDrag() {
+            document.removeEventListener('mousemove', handleDrag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+        
+        // 处理进度条点击
+        function handleProgressClick(e) {
+            const containerRect = progressContainer.getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            const clickX = e.clientX - containerRect.left;
+            let progress = (clickX / containerWidth) * 100;
+            
+            // 限制在0-100之间
+            progress = Math.max(0, Math.min(100, progress));
+            
+            // 更新进度条
+            progressBar.style.width = `${progress}%`;
+            
+            // 更新时间显示
+            const totalDuration = isWorkSession ? workDuration : restDuration;
+            const newTimeLeft = Math.round(totalDuration * (1 - progress / 100));
+            updateTimerDisplay(newTimeLeft);
+            
+            // 更新实际时间
+            timeLeft = newTimeLeft;
+            
+            // 更新开始时间
+            if (isRunning) {
+                if (isWorkSession) {
+                    workStartTime = Date.now() - (workDuration - timeLeft) * 1000;
+                } else {
+                    breakStartTime = Date.now() - (restDuration - timeLeft) * 1000;
+                }
+            }
         }
         
         // 更新工作次数显示
@@ -739,6 +1304,13 @@
             updateDisplay();
         }
         
+        // 更新计时器显示
+        function updateTimerDisplay(time) {
+            const minutes = Math.floor(time / 60);
+            const seconds = time % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
         // 暂停计时器
         function pauseTimer() {
             if (isRunning) {
@@ -769,7 +1341,7 @@
         // 开始短休息
         function startShortBreak() {
             clearInterval(timerInterval);
-            playSound();
+            playSound('shortBreak');
             createFloatingNote("♫");
             showNotification("请休息10秒钟");
             
@@ -798,11 +1370,14 @@
                     statusDisplay.textContent = "专注工作中";
                     statusDisplay.className = "status work";
                     
+                    // 恢复工作计时器
+                    workStartTime = Date.now() - workElapsed * 1000;
+                    
+                    // 更新显示
+                    updateDisplay();
+                    
                     if (isRunning) {
-                        workStartTime = Date.now() - workElapsed * 1000;
                         timerInterval = setInterval(updateTimer, 1000);
-                    } else {
-                        updateDisplay();
                     }
                 }
                 
@@ -813,7 +1388,7 @@
         // 开始长休息
         function startLongBreak() {
             clearInterval(timerInterval);
-            playSound();
+            playSound('longBreak');
             createFloatingNote("♬");
             showNotification("工作时间结束，请休息");
             
@@ -843,7 +1418,7 @@
         // 开始工作会话
         function startWorkSession() {
             clearInterval(timerInterval);
-            playSound();
+            playSound('work');
             createFloatingNote("♪");
             showNotification("休息结束，开始专注工作");
             
@@ -865,9 +1440,7 @@
         
         // 更新显示
         function updateDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            updateTimerDisplay(timeLeft);
             
             // 更新进度条
             const totalDuration = isWorkSession ? workDuration : restDuration;
@@ -876,78 +1449,245 @@
         }
         
         // 播放声音
-        function playSound() {
+        function playSound(soundEvent) {
             if (!soundEnabled || !audioContext) return;
             
             try {
                 // 停止任何正在播放的声音
                 stopAllSounds();
                 
-                // 根据选择的音效生成不同的声音
-                let frequency, type, duration;
+                // 获取当前事件类型的音色参数
+                const params = soundParams[soundEvent];
                 
-                switch(currentSound) {
+                // 应用音色参数
+                const volume = params.volume / 100;
+                const pitchFactor = 0.5 + (params.pitch / 100) * 1.5; // 0.5-2.0
+                const decayTime = 0.5 + (params.decay / 100) * 4.5; // 0.5-5.0秒
+                const brightness = params.brightness / 100; // 0.0-1.0
+                
+                // 根据音效类型播放不同的声音
+                switch(params.type) {
                     case 'bell':
-                        frequency = 784; // G5
-                        type = 'sine';
-                        duration = 1.0;
+                        playBellSound(volume, pitchFactor, decayTime, brightness, params.harmonics);
                         break;
                     case 'chime':
-                        frequency = 1046; // C6
-                        type = 'sine';
-                        duration = 1.5;
+                        playChimeSound(volume, pitchFactor, decayTime, brightness, params.harmonics);
                         break;
                     case 'beep':
-                        frequency = 440; // A4
-                        type = 'square';
-                        duration = 0.3;
+                        playBeepSound(volume, pitchFactor, decayTime, brightness, params.harmonics);
                         break;
                     case 'gong':
-                        frequency = 196; // G3
-                        type = 'sine';
-                        duration = 2.0;
+                        playGongSound(volume, pitchFactor, decayTime, brightness, params.harmonics);
                         break;
-                    default: // piano
-                        frequency = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25][
-                            Math.floor(Math.random() * 8)
-                        ];
-                        type = 'sine';
-                        duration = 0.5;
+                    case 'piano':
+                    default:
+                        playPianoSound(volume, pitchFactor, decayTime, brightness, params.harmonics);
                 }
-                
-                oscillator = audioContext.createOscillator();
-                gainNode = audioContext.createGain();
-                
-                oscillator.type = type;
-                oscillator.frequency.value = frequency;
-                
-                // 设置音量包络
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.start();
-                
-                // 设置时间后停止振荡器
-                setTimeout(() => {
-                    if (oscillator) {
-                        oscillator.stop();
-                        oscillator = null;
-                    }
-                }, duration * 1000);
             } catch (e) {
                 console.error("播放声音失败:", e);
             }
         }
         
+        // 播放钢琴音效（带参数）
+        function playPianoSound(volume, pitchFactor, decayTime, brightness, harmonics) {
+            const now = audioContext.currentTime;
+            const baseFreq = 261.63 * pitchFactor;
+            
+            // 创建基音振荡器
+            const baseOsc = audioContext.createOscillator();
+            const baseGain = audioContext.createGain();
+            
+            baseOsc.type = 'sine';
+            baseOsc.frequency.value = baseFreq;
+            baseOsc.connect(baseGain);
+            baseGain.connect(audioContext.destination);
+            
+            // 设置基音音量包络
+            baseGain.gain.setValueAtTime(0, now);
+            baseGain.gain.linearRampToValueAtTime(volume * brightness, now + 0.01);
+            baseGain.gain.exponentialRampToValueAtTime(0.001, now + decayTime);
+            
+            baseOsc.start(now);
+            baseOsc.stop(now + decayTime);
+            
+            oscillators.push({osc: baseOsc, gain: baseGain});
+            
+            // 创建泛音振荡器
+            for (let i = 0; i < harmonics.length; i++) {
+                const harmonicGain = harmonics[i] / 100 * volume * brightness;
+                if (harmonicGain <= 0) continue;
+                
+                const harmonic = audioContext.createOscillator();
+                const harmonicNode = audioContext.createGain();
+                
+                harmonic.type = i % 2 === 0 ? 'sine' : 'triangle';
+                harmonic.frequency.value = baseFreq * (i + 2);
+                harmonic.connect(harmonicNode);
+                harmonicNode.connect(audioContext.destination);
+                
+                // 设置泛音音量包络
+                harmonicNode.gain.setValueAtTime(0, now);
+                harmonicNode.gain.linearRampToValueAtTime(harmonicGain, now + 0.01);
+                harmonicNode.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (0.8 + i * 0.1));
+                
+                harmonic.start(now);
+                harmonic.stop(now + decayTime * (0.8 + i * 0.1));
+                
+                oscillators.push({osc: harmonic, gain: harmonicNode});
+            }
+        }
+        
+        // 播放铃铛音效（带参数）
+        function playBellSound(volume, pitchFactor, decayTime, brightness, harmonics) {
+            const now = audioContext.currentTime;
+            const baseFreq = 784 * pitchFactor;
+            
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.value = baseFreq;
+            osc.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // 设置音量包络
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(volume, now + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + decayTime);
+            
+            // 添加高频泛音
+            const overtone = audioContext.createOscillator();
+            const overtoneGain = audioContext.createGain();
+            
+            overtone.type = 'sine';
+            overtone.frequency.value = baseFreq * 2.5 * (1 + brightness * 0.5);
+            overtone.connect(overtoneGain);
+            overtoneGain.connect(audioContext.destination);
+            
+            overtoneGain.gain.setValueAtTime(0, now);
+            overtoneGain.gain.linearRampToValueAtTime(volume * 0.3 * brightness, now + 0.1);
+            overtoneGain.gain.exponentialRampToValueAtTime(0.001, now + decayTime);
+            
+            osc.start(now);
+            osc.stop(now + decayTime);
+            overtone.start(now);
+            overtone.stop(now + decayTime);
+            
+            oscillators.push({osc: osc, gain: gainNode});
+            oscillators.push({osc: overtone, gain: overtoneGain});
+        }
+        
+        // 播放风铃音效（带参数）
+        function playChimeSound(volume, pitchFactor, decayTime, brightness, harmonics) {
+            const now = audioContext.currentTime;
+            
+            // 创建多个随机频率的振荡器
+            for (let i = 0; i < 3; i++) {
+                const freq = (800 + Math.random() * 800) * pitchFactor * (1 + brightness * 0.5);
+                const osc = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // 设置音量包络
+                gainNode.gain.setValueAtTime(0, now + i * 0.2);
+                gainNode.gain.linearRampToValueAtTime(volume * 0.4, now + i * 0.2 + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + decayTime);
+                
+                osc.start(now + i * 0.2);
+                osc.stop(now + decayTime);
+                
+                oscillators.push({osc: osc, gain: gainNode});
+            }
+        }
+        
+        // 播放蜂鸣音效（带参数）
+        function playBeepSound(volume, pitchFactor, decayTime, brightness, harmonics) {
+            const now = audioContext.currentTime;
+            const freq = 880 * pitchFactor;
+            const duration = Math.max(0.1, decayTime * 0.1);
+            
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            osc.type = 'square';
+            osc.frequency.value = freq;
+            osc.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // 设置音量包络
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(volume, now + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0, now + duration);
+            
+            osc.start(now);
+            osc.stop(now + duration);
+            
+            oscillators.push({osc: osc, gain: gainNode});
+        }
+        
+        // 播放铜锣音效（带参数）
+        function playGongSound(volume, pitchFactor, decayTime, brightness, harmonics) {
+            const now = audioContext.currentTime;
+            const baseFreq = 110 * pitchFactor;
+            
+            // 主振荡器（低频基音）
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.value = baseFreq;
+            osc.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // 设置音量包络
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(volume, now + 0.5);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + decayTime);
+            
+            // 添加金属质感的泛音
+            const overtones = [
+                {freq: baseFreq * 2.76, gain: volume * harmonics[0]/100 * brightness},
+                {freq: baseFreq * 3.42, gain: volume * harmonics[1]/100 * brightness},
+                {freq: baseFreq * 4.07, gain: volume * harmonics[2]/100 * brightness}
+            ];
+            
+            overtones.forEach(overtone => {
+                const overtoneOsc = audioContext.createOscillator();
+                const overtoneGain = audioContext.createGain();
+                
+                overtoneOsc.type = 'sine';
+                overtoneOsc.frequency.value = overtone.freq;
+                overtoneOsc.connect(overtoneGain);
+                overtoneGain.connect(audioContext.destination);
+                
+                overtoneGain.gain.setValueAtTime(0, now);
+                overtoneGain.gain.linearRampToValueAtTime(overtone.gain, now + 0.3);
+                overtoneGain.gain.exponentialRampToValueAtTime(0.001, now + decayTime);
+                
+                overtoneOsc.start(now);
+                overtoneOsc.stop(now + decayTime);
+                
+                oscillators.push({osc: overtoneOsc, gain: overtoneGain});
+            });
+            
+            osc.start(now);
+            osc.stop(now + decayTime);
+            oscillators.push({osc: osc, gain: gainNode});
+        }
+        
         // 停止所有声音
         function stopAllSounds() {
-            if (oscillator) {
-                oscillator.stop();
-                oscillator = null;
-            }
+            oscillators.forEach(obj => {
+                if (obj.osc) {
+                    obj.osc.stop();
+                    obj.osc.disconnect();
+                }
+            });
+            oscillators = [];
         }
         
         // 创建浮动音符
@@ -975,8 +1715,8 @@
         // 测试声音
         function testSound() {
             if (soundEnabled) {
-                playSound();
-                createFloatingNote("♩");
+                playSound(currentSoundType);
+                createFloatingNote("♪");
                 showNotification("测试声音播放中");
             } else {
                 showNotification("声音已关闭，请开启声音");
