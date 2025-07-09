@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>专注计时器 - 独立休息倒计时</title>
+    <title>专注计时器 - 完整修复版</title>
     <style>
         * {
             margin: 0;
@@ -447,96 +447,15 @@
                 transform: translateY(-100px) rotate(360deg);
             }
         }
-        
-        .break-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s;
-        }
-        
-        .break-modal.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        .break-content {
-            background: rgba(0, 0, 20, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            max-width: 600px;
-            width: 90%;
-            box-shadow: 0 0 50px rgba(0, 201, 255, 0.5);
-            border: 2px solid #00c9ff;
-        }
-        
-        .break-title {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            color: #ff9a8b;
-        }
-        
-        .break-timer {
-            font-size: 5rem;
-            font-weight: bold;
-            margin: 30px 0;
-            color: #92fe9d;
-            text-shadow: 0 0 20px rgba(146, 254, 157, 0.8);
-        }
-        
-        .break-message {
-            font-size: 1.5rem;
-            margin-bottom: 30px;
-            color: #a0d2ff;
-        }
-        
-        .break-button {
-            background: linear-gradient(45deg, #00c9ff, #92fe9d);
-            color: #1a2a6c;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s;
-        }
-        
-        .break-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 25px rgba(0, 201, 255, 0.7);
-        }
     </style>
 </head>
 <body>
     <div class="particles" id="particles"></div>
     
-    <div class="break-modal" id="break-modal">
-        <div class="break-content">
-            <h2 class="break-title">休息时间</h2>
-            <div class="break-timer" id="break-timer">10</div>
-            <p class="break-message">请放松一下，深呼吸，活动活动身体</p>
-            <p class="break-message">休息是为了更好地专注</p>
-            <button class="break-button" id="skip-break">跳过休息</button>
-        </div>
-    </div>
-    
     <div class="container">
         <header>
             <h1>专注计时器</h1>
-            <p class="subtitle">独立休息倒计时功能</p>
+            <p class="subtitle">已修复10秒休息后计时器问题</p>
             <p class="subtitle">科学时间管理，提升工作效率</p>
         </header>
         
@@ -632,7 +551,8 @@
         let promptTime;
         let timerInterval;
         let breakInterval;
-        let breakTimeLeft = 10; // 10秒休息时间
+        let workStartTime = 0;
+        let breakStartTime = 0;
         
         // DOM元素
         const timerDisplay = document.getElementById('timer');
@@ -654,9 +574,6 @@
         const currentSoundDisplay = document.getElementById('current-sound');
         const soundOptions = document.querySelectorAll('.sound-option');
         const particlesContainer = document.getElementById('particles');
-        const breakModal = document.getElementById('break-modal');
-        const breakTimerDisplay = document.getElementById('break-timer');
-        const skipBreakBtn = document.getElementById('skip-break');
         
         // 初始化
         function init() {
@@ -701,7 +618,6 @@
             resetBtn.addEventListener('click', resetTimer);
             soundTestBtn.addEventListener('click', testSound);
             soundToggle.addEventListener('click', toggleSound);
-            skipBreakBtn.addEventListener('click', skipBreak);
             
             // 设置更改事件
             workTimeInput.addEventListener('change', updateSettings);
@@ -783,39 +699,44 @@
                     promptTime = Math.floor(Math.random() * (maxPrompt - minPrompt + 1)) + minPrompt;
                     statusDisplay.textContent = "专注工作中";
                     statusDisplay.className = "status work";
+                    workStartTime = Date.now() - (workDuration - timeLeft) * 1000;
+                } else {
+                    breakStartTime = Date.now() - (restDuration - timeLeft) * 1000;
                 }
                 
-                const startTime = Date.now() - (workDuration - timeLeft) * 1000;
-                
-                timerInterval = setInterval(() => {
-                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                    timeLeft = workDuration - elapsed;
-                    
-                    if (isWorkSession) {
-                        // 检查是否该提示休息
-                        const timeUntilPrompt = promptTime - elapsed;
-                        if (timeUntilPrompt <= 0) {
-                            // 触发短休息
-                            startShortBreak();
-                            return;
-                        }
-                        
-                        // 检查工作是否结束
-                        if (timeLeft <= 0) {
-                            startLongBreak();
-                            return;
-                        }
-                    } else {
-                        // 休息时间检查
-                        if (timeLeft <= 0) {
-                            startWorkSession();
-                            return;
-                        }
-                    }
-                    
-                    updateDisplay();
-                }, 1000);
+                timerInterval = setInterval(updateTimer, 1000);
             }
+        }
+        
+        // 更新计时器
+        function updateTimer() {
+            if (isWorkSession) {
+                const elapsed = Math.floor((Date.now() - workStartTime) / 1000);
+                timeLeft = workDuration - elapsed;
+                
+                // 检查是否该提示休息
+                if (elapsed >= promptTime) {
+                    startShortBreak();
+                    return;
+                }
+                
+                // 检查工作是否结束
+                if (timeLeft <= 0) {
+                    startLongBreak();
+                    return;
+                }
+            } else {
+                const elapsed = Math.floor((Date.now() - breakStartTime) / 1000);
+                timeLeft = restDuration - elapsed;
+                
+                // 检查休息是否结束
+                if (timeLeft <= 0) {
+                    startWorkSession();
+                    return;
+                }
+            }
+            
+            updateDisplay();
         }
         
         // 暂停计时器
@@ -852,60 +773,41 @@
             createFloatingNote("♫");
             showNotification("请休息10秒钟");
             
+            // 保存当前工作状态
+            const workElapsed = workDuration - timeLeft;
+            
             // 更新状态显示
             statusDisplay.textContent = "短休息中 (10秒)";
             statusDisplay.className = "status short-break";
             
-            // 显示休息模态框
-            breakTimeLeft = 10;
-            breakModal.classList.add('show');
-            updateBreakTimer();
-            
             // 开始10秒倒计时
+            let breakTime = 10;
             breakInterval = setInterval(() => {
-                breakTimeLeft--;
-                updateBreakTimer();
+                timerDisplay.textContent = `00:${breakTime.toString().padStart(2, '0')}`;
+                progressBar.style.width = `${((10 - breakTime) / 10 * 100).toFixed(2)}%`;
                 
-                if (breakTimeLeft <= 0) {
-                    endShortBreak();
+                if (breakTime <= 0) {
+                    clearInterval(breakInterval);
+                    
+                    // 重置提示时间
+                    promptTime = workElapsed + Math.floor(Math.random() * (maxPrompt - minPrompt + 1)) + minPrompt;
+                    
+                    // 恢复工作状态
+                    isWorkSession = true;
+                    timeLeft = workDuration - workElapsed;
+                    statusDisplay.textContent = "专注工作中";
+                    statusDisplay.className = "status work";
+                    
+                    if (isRunning) {
+                        workStartTime = Date.now() - workElapsed * 1000;
+                        timerInterval = setInterval(updateTimer, 1000);
+                    } else {
+                        updateDisplay();
+                    }
                 }
+                
+                breakTime--;
             }, 1000);
-        }
-        
-        // 更新休息计时器显示
-        function updateBreakTimer() {
-            breakTimerDisplay.textContent = breakTimeLeft;
-        }
-        
-        // 结束短休息
-        function endShortBreak() {
-            clearInterval(breakInterval);
-            breakInterval = null;
-            breakModal.classList.remove('show');
-            
-            // 重置提示时间
-            promptTime = Math.floor(Math.random() * (maxPrompt - minPrompt + 1)) + minPrompt;
-            
-            // 继续工作
-            timeLeft = workDuration - (workDuration - timeLeft);
-            isWorkSession = true;
-            statusDisplay.textContent = "专注工作中";
-            statusDisplay.className = "status work";
-            
-            if (isRunning) {
-                startTimer();
-            } else {
-                updateDisplay();
-            }
-        }
-        
-        // 跳过休息
-        function skipBreak() {
-            if (breakInterval) {
-                clearInterval(breakInterval);
-                breakInterval = null;
-            }
-            endShortBreak();
         }
         
         // 开始长休息
@@ -923,10 +825,10 @@
             updateSessionCount();
             
             // 开始休息计时
-            const startTime = Date.now();
+            breakStartTime = Date.now();
             
             timerInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const elapsed = Math.floor((Date.now() - breakStartTime) / 1000);
                 timeLeft = restDuration - elapsed;
                 
                 if (timeLeft <= 0) {
@@ -954,7 +856,8 @@
             promptTime = Math.floor(Math.random() * (maxPrompt - minPrompt + 1)) + minPrompt;
             
             if (isRunning) {
-                startTimer();
+                workStartTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
             } else {
                 updateDisplay();
             }
