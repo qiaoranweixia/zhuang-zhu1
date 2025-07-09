@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>专业专注计时器 - 完整修复版</title>
+    <title>专注计时器 - 独立休息倒计时</title>
     <style>
         * {
             margin: 0;
@@ -447,16 +447,97 @@
                 transform: translateY(-100px) rotate(360deg);
             }
         }
+        
+        .break-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        
+        .break-modal.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .break-content {
+            background: rgba(0, 0, 20, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 0 50px rgba(0, 201, 255, 0.5);
+            border: 2px solid #00c9ff;
+        }
+        
+        .break-title {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #ff9a8b;
+        }
+        
+        .break-timer {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 30px 0;
+            color: #92fe9d;
+            text-shadow: 0 0 20px rgba(146, 254, 157, 0.8);
+        }
+        
+        .break-message {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: #a0d2ff;
+        }
+        
+        .break-button {
+            background: linear-gradient(45deg, #00c9ff, #92fe9d);
+            color: #1a2a6c;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .break-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 201, 255, 0.7);
+        }
     </style>
 </head>
 <body>
     <div class="particles" id="particles"></div>
     
+    <div class="break-modal" id="break-modal">
+        <div class="break-content">
+            <h2 class="break-title">休息时间</h2>
+            <div class="break-timer" id="break-timer">10</div>
+            <p class="break-message">请放松一下，深呼吸，活动活动身体</p>
+            <p class="break-message">休息是为了更好地专注</p>
+            <button class="break-button" id="skip-break">跳过休息</button>
+        </div>
+    </div>
+    
     <div class="container">
         <header>
-            <h1>专业专注计时器</h1>
-            <p class="subtitle">基于番茄工作法 + 随机提示的科学时间管理工具</p>
-            <p class="subtitle">完整修复版 - 解决所有计时器逻辑问题</p>
+            <h1>专注计时器</h1>
+            <p class="subtitle">独立休息倒计时功能</p>
+            <p class="subtitle">科学时间管理，提升工作效率</p>
         </header>
         
         <div class="timer-display" id="timer">90:00</div>
@@ -551,6 +632,7 @@
         let promptTime;
         let timerInterval;
         let breakInterval;
+        let breakTimeLeft = 10; // 10秒休息时间
         
         // DOM元素
         const timerDisplay = document.getElementById('timer');
@@ -572,6 +654,9 @@
         const currentSoundDisplay = document.getElementById('current-sound');
         const soundOptions = document.querySelectorAll('.sound-option');
         const particlesContainer = document.getElementById('particles');
+        const breakModal = document.getElementById('break-modal');
+        const breakTimerDisplay = document.getElementById('break-timer');
+        const skipBreakBtn = document.getElementById('skip-break');
         
         // 初始化
         function init() {
@@ -616,6 +701,7 @@
             resetBtn.addEventListener('click', resetTimer);
             soundTestBtn.addEventListener('click', testSound);
             soundToggle.addEventListener('click', toggleSound);
+            skipBreakBtn.addEventListener('click', skipBreak);
             
             // 设置更改事件
             workTimeInput.addEventListener('change', updateSettings);
@@ -710,13 +796,13 @@
                         const timeUntilPrompt = promptTime - elapsed;
                         if (timeUntilPrompt <= 0) {
                             // 触发短休息
-                            takeShortBreak();
+                            startShortBreak();
                             return;
                         }
                         
                         // 检查工作是否结束
                         if (timeLeft <= 0) {
-                            takeLongBreak();
+                            startLongBreak();
                             return;
                         }
                     } else {
@@ -759,8 +845,8 @@
             showNotification("计时器已重置");
         }
         
-        // 进行短休息
-        function takeShortBreak() {
+        // 开始短休息
+        function startShortBreak() {
             clearInterval(timerInterval);
             playSound();
             createFloatingNote("♫");
@@ -770,38 +856,60 @@
             statusDisplay.textContent = "短休息中 (10秒)";
             statusDisplay.className = "status short-break";
             
+            // 显示休息模态框
+            breakTimeLeft = 10;
+            breakModal.classList.add('show');
+            updateBreakTimer();
+            
             // 开始10秒倒计时
-            let breakTime = 10;
             breakInterval = setInterval(() => {
-                timerDisplay.textContent = `00:${breakTime.toString().padStart(2, '0')}`;
-                progressBar.style.width = `${((10 - breakTime) / 10 * 100).toFixed(2)}%`;
+                breakTimeLeft--;
+                updateBreakTimer();
                 
-                if (breakTime <= 0) {
-                    clearInterval(breakInterval);
-                    breakInterval = null;
-                    
-                    // 重置提示时间
-                    promptTime = Math.floor(Math.random() * (maxPrompt - minPrompt + 1)) + minPrompt;
-                    
-                    // 继续工作
-                    timeLeft = workDuration - (workDuration - timeLeft);
-                    isWorkSession = true;
-                    statusDisplay.textContent = "专注工作中";
-                    statusDisplay.className = "status work";
-                    
-                    if (isRunning) {
-                        startTimer();
-                    } else {
-                        updateDisplay();
-                    }
+                if (breakTimeLeft <= 0) {
+                    endShortBreak();
                 }
-                
-                breakTime--;
             }, 1000);
         }
         
-        // 进行长休息
-        function takeLongBreak() {
+        // 更新休息计时器显示
+        function updateBreakTimer() {
+            breakTimerDisplay.textContent = breakTimeLeft;
+        }
+        
+        // 结束短休息
+        function endShortBreak() {
+            clearInterval(breakInterval);
+            breakInterval = null;
+            breakModal.classList.remove('show');
+            
+            // 重置提示时间
+            promptTime = Math.floor(Math.random() * (maxPrompt - minPrompt + 1)) + minPrompt;
+            
+            // 继续工作
+            timeLeft = workDuration - (workDuration - timeLeft);
+            isWorkSession = true;
+            statusDisplay.textContent = "专注工作中";
+            statusDisplay.className = "status work";
+            
+            if (isRunning) {
+                startTimer();
+            } else {
+                updateDisplay();
+            }
+        }
+        
+        // 跳过休息
+        function skipBreak() {
+            if (breakInterval) {
+                clearInterval(breakInterval);
+                breakInterval = null;
+            }
+            endShortBreak();
+        }
+        
+        // 开始长休息
+        function startLongBreak() {
             clearInterval(timerInterval);
             playSound();
             createFloatingNote("♬");
