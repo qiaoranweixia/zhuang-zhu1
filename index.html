@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>专注计时器 Pro</title>
+    <title>专注计时器 Pro (后台保活版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
+        /* 保持原有的精致 UI 样式 */
         :root {
             --primary: #00f2fe;
             --secondary: #4facfe;
             --accent: #ff0080;
-            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-bg: rgba(15, 23, 42, 0.85); /*稍微加深背景以适应移动端*/
             --glass-border: rgba(255, 255, 255, 0.08);
             --text-main: #f1f5f9;
             --text-muted: #94a3b8;
@@ -18,7 +19,7 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-
+        
         body {
             background: #0f172a;
             color: var(--text-main);
@@ -29,25 +30,18 @@
             align-items: center;
             overflow-x: hidden;
             position: relative;
-            /* 移动端优化 */
             padding: 15px;
         }
 
-        /* 动态极光背景 */
         .aurora-bg {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background:
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: 
                 radial-gradient(circle at 10% 20%, rgba(79, 172, 254, 0.2) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(255, 0, 128, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(0, 242, 254, 0.1) 0%, transparent 60%);
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 128, 0.15) 0%, transparent 40%);
             z-index: -1;
             animation: breathe 10s ease-in-out infinite alternate;
         }
-        @keyframes breathe {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.1); opacity: 1; }
-        }
+        @keyframes breathe { 0% { opacity: 0.6; } 100% { opacity: 0.9; } }
 
         .container {
             background: var(--glass-bg);
@@ -55,565 +49,288 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: 30px;
-            padding: 40px;
+            padding: 30px 25px;
             width: 100%;
-            max-width: 800px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 600px; /* 稍微调窄适应手机 */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
             position: relative;
             z-index: 10;
         }
 
-        /* 专注模式 */
-        body.focus-mode .container > *:not(.timer-section):not(.progress-container) {
-            opacity: 0.2;
-            filter: blur(2px);
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
-        body.focus-mode .controls {
-            opacity: 1 !important;
-            filter: none !important;
-            pointer-events: auto !important;
+        /* 专注模式：极简显示 */
+        body.focus-mode .container > *:not(.timer-section):not(.progress-container):not(.controls) {
+            opacity: 0.3; filter: blur(2px); pointer-events: none; transition: 0.5s;
         }
 
-        header { text-align: center; margin-bottom: 30px; }
+        header { text-align: center; margin-bottom: 20px; }
         h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
+            font-size: 2rem; font-weight: 800;
             background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 5px;
+            -webkit-background-clip: text; background-clip: text; color: transparent;
         }
-        .subtitle { color: var(--text-muted); font-size: 0.9rem; }
+        .subtitle { color: var(--text-muted); font-size: 0.85rem; }
 
-        /* 计时器区域 */
-        .timer-section { text-align: center; position: relative; margin: 20px 0; }
-
+        .timer-section { text-align: center; margin: 20px 0; }
         .status-badge {
-            display: inline-block;
-            padding: 6px 16px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            border: 1px solid rgba(255,255,255,0.1);
+            display: inline-block; padding: 6px 16px; border-radius: 50px;
+            font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1);
         }
         .status-badge.work { background: rgba(79, 172, 254, 0.15); color: #4facfe; }
         .status-badge.short-break { background: rgba(0, 242, 254, 0.15); color: #00f2fe; }
         .status-badge.long-break { background: rgba(255, 0, 128, 0.15); color: #ff0080; }
 
         .timer-display {
-            font-size: 6rem;
-            font-weight: 300;
-            font-family: 'Inter', monospace;
-            line-height: 1;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            margin: 10px 0;
+            font-size: 5.5rem; font-weight: 300; font-family: 'Inter', monospace;
+            line-height: 1; text-shadow: 0 5px 20px rgba(0,0,0,0.4);
             font-variant-numeric: tabular-nums;
         }
 
-        /* 进度条 */
         .progress-container {
-            height: 10px; /* 手机端加粗一点方便点 */
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            margin: 25px 0 35px;
-            cursor: pointer;
-            position: relative;
-            touch-action: none; /* 防止拖动时滚动屏幕 */
+            height: 12px; background: rgba(255,255,255,0.1); border-radius: 10px;
+            margin: 25px 0 35px; cursor: pointer; position: relative; touch-action: none;
         }
-
         .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, var(--secondary), var(--primary));
-            border-radius: 10px;
-            width: 0%;
-            position: relative;
+            height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary));
+            border-radius: 10px; width: 0%; transition: width 0.2s linear;
         }
-
         .progress-handle {
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            position: absolute; right: -12px; top: 50%; transform: translateY(-50%);
+            width: 24px; height: 24px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
-        /* 按钮 */
-        .controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
-
+        .controls { display: flex; gap: 15px; margin-bottom: 20px; }
         .btn {
-            padding: 16px 35px;
-            border: none;
-            border-radius: 16px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            flex: 1; /* 移动端自适应 */
-            min-width: 120px;
-            max-width: 200px;
+            padding: 18px 0; border: none; border-radius: 16px;
+            font-size: 1.1rem; font-weight: 600; cursor: pointer; flex: 1;
+            transition: transform 0.1s;
         }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: linear-gradient(135deg, var(--secondary), var(--primary)); color: #0f172a; }
+        .btn-secondary { background: rgba(255, 255, 255, 0.1); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-icon { flex: 0 0 56px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;}
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--secondary), var(--primary));
-            color: #0f172a;
-        }
+        /* 面板切换与设置 */
+        .panel-toggle { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
+        .toggle-text { color: var(--text-muted); padding: 8px 15px; font-size: 0.9rem; border-radius: 8px; }
+        .toggle-text.active { color: #fff; background: rgba(255,255,255,0.1); }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-main);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .btn-icon { padding: 0; width: 54px; height: 54px; border-radius: 50%; flex: 0 0 54px; min-width: 54px;}
+        .collapsible-panel { display: none; }
+        .collapsible-panel.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 设置面板 */
-        .panel-toggle {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 15px;
-        }
-        .toggle-text {
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 10px 20px;
-            border-radius: 12px;
-            transition: all 0.2s;
-            font-size: 0.95rem;
-        }
-        .toggle-text.active { color: var(--text-main); background: rgba(255,255,255,0.1); }
-
-        .collapsible-panel { display: none; animation: fadeIn 0.3s ease; }
-        .collapsible-panel.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .grid-settings {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .setting-card {
-            background: rgba(0,0,0,0.25);
-            padding: 15px 20px;
-            border-radius: 16px;
-        }
-        .setting-card h3 { font-size: 0.95rem; margin-bottom: 12px; color: var(--text-muted); }
-
-        .setting-row {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
-        }
-
-        /* 滑块优化 */
-        input[type="range"] {
-            width: 100%;
-            height: 20px; /* 增大触摸区 */
-            background: transparent;
-            appearance: none;
-            outline: none;
-        }
-        input[type="range"]::-webkit-slider-runnable-track {
-            height: 6px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 3px;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            margin-top: -7px;
-            width: 20px;
-            height: 20px;
-            background: var(--primary);
-            border-radius: 50%;
-        }
-
+        .grid-settings { display: grid; gap: 15px; }
+        .setting-card { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.95rem;}
+        
         input[type="number"] {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: white;
-            padding: 8px;
-            border-radius: 8px;
-            width: 70px;
-            text-align: center;
-            font-size: 1rem;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 8px; border-radius: 8px; width: 60px; text-align: center; font-size: 1rem;
         }
+        input[type="range"] { width: 100%; height: 24px; background: transparent; appearance: none; }
+        input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; margin-top: -9px; width: 24px; height: 24px; background: var(--primary); border-radius: 50%; }
 
-        .sound-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 20px; justify-content: center;}
-        .sound-pill {
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.05);
-            font-size: 0.9rem;
-            cursor: pointer;
-            border: 1px solid transparent;
-        }
-        .sound-pill.active { background: rgba(79, 172, 254, 0.2); border-color: var(--secondary); color: var(--primary); }
+        .sound-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .sound-pill { flex: 1; text-align: center; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.85rem; }
+        .sound-pill.active { background: rgba(79, 172, 254, 0.2); color: var(--primary); border: 1px solid var(--secondary); }
 
         .notification {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px);
-            background: rgba(0, 0, 0, 0.9); color: white; padding: 12px 24px; border-radius: 50px;
-            opacity: 0; transition: all 0.3s; z-index: 1000; font-size: 0.95rem; width: max-content;
-            max-width: 90%; text-align: center; pointer-events: none;
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); color: #fff; padding: 10px 20px; border-radius: 30px;
+            font-size: 0.9rem; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 999; width: 80%; text-align: center;
         }
-        .notification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .notification.show { opacity: 1; }
 
-        .floating-note {
-            position: fixed; font-size: 2.5rem; animation: floatUp 4s forwards ease-out;
-            pointer-events: none; z-index: 50;
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(-200px) rotate(20deg); opacity: 0; }
-        }
+        /* 隐藏的 Audio 播放器，用于后台保活 */
+        #silent-player { display: none; }
 
-        /* 移动端特别适配 */
-        @media (max-width: 600px) {
-            .container { padding: 25px 20px; border-radius: 24px; }
-            .timer-display { font-size: 4.8rem; }
-            h1 { font-size: 1.8rem; }
-            .controls { gap: 10px; }
-            .btn { padding: 15px 0; font-size: 1rem; }
-            .grid-settings { grid-template-columns: 1fr; }
-            .sound-pills { justify-content: space-between; }
-            .sound-pill { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.8rem;}
+        @media (max-width: 400px) {
+            .timer-display { font-size: 4.5rem; }
+            h1 { font-size: 1.6rem; }
         }
     </style>
 </head>
 <body>
     <div class="aurora-bg"></div>
+    
+    <audio id="silent-player" loop playsinline>
+        <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAASAA8AAA//OEAAAAAAAAAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mpeg">
+    </audio>
 
-    <div class="container" id="main-container">
+    <div class="container">
         <header>
             <h1>Focus Timer Pro</h1>
-            <p class="subtitle">Web Audio 合成音效 · 息屏保活技术</p>
+            <p class="subtitle">后台常驻 · 息屏可用</p>
         </header>
-
+        
         <div class="timer-section">
-            <div class="status-badge work" id="status">准备开始</div>
+            <div class="status-badge work" id="status">准备就绪</div>
             <div class="timer-display" id="timer">90:00</div>
         </div>
 
         <div class="progress-container" id="progress-container">
             <div class="progress-bar" id="progress-bar">
-                <div class="progress-handle" id="progress-handle"></div>
+                <div class="progress-handle"></div>
             </div>
         </div>
 
         <div class="controls">
             <button class="btn btn-primary" id="start-btn">开始专注</button>
-            <button class="btn btn-secondary btn-icon" id="reset-btn" title="重置">↻</button>
-            <button class="btn btn-secondary btn-icon" id="mute-btn" title="静音">🔊</button>
+            <button class="btn btn-secondary btn-icon" id="reset-btn">↻</button>
+            <button class="btn btn-secondary btn-icon" id="mute-btn">🔊</button>
         </div>
 
         <div class="panel-toggle">
-            <div class="toggle-text" data-target="panel-settings">⚙️ 常用设置</div>
-            <div class="toggle-text" data-target="panel-sound">🎵 音色定制</div>
+            <div class="toggle-text active" data-target="panel-settings">设置</div>
+            <div class="toggle-text" data-target="panel-sound">音效</div>
         </div>
 
-        <div class="collapsible-panel" id="panel-settings">
+        <div class="collapsible-panel active" id="panel-settings">
             <div class="grid-settings">
                 <div class="setting-card">
-                    <h3>时间配置 (分钟)</h3>
-                    <div class="setting-row">
-                        <label>专注时长</label>
-                        <input type="number" id="work-time" min="1" max="240" value="90">
-                    </div>
-                    <div class="setting-row">
-                        <label>休息时长</label>
-                        <input type="number" id="rest-time" min="1" max="60" value="20">
-                    </div>
+                    <div class="setting-row"><label>专注时长 (分)</label> <input type="number" id="work-time" value="90"></div>
+                    <div class="setting-row"><label>休息时长 (分)</label> <input type="number" id="rest-time" value="20"></div>
                 </div>
                 <div class="setting-card">
-                    <h3>随机提示 (防走神)</h3>
-                    <div class="setting-row">
-                        <label>最短间隔</label>
-                        <input type="number" id="min-prompt" min="1" max="30" value="3">
-                    </div>
-                    <div class="setting-row">
-                        <label>最长间隔</label>
-                        <input type="number" id="max-prompt" min="2" max="60" value="5">
-                    </div>
+                    <div class="setting-row"><label>最短随机提示 (分)</label> <input type="number" id="min-prompt" value="3"></div>
+                    <div class="setting-row"><label>最长随机提示 (分)</label> <input type="number" id="max-prompt" value="5"></div>
                 </div>
             </div>
         </div>
 
         <div class="collapsible-panel" id="panel-sound">
-            <div class="sound-pills">
-                <div class="sound-pill active" data-edit-target="work">工作音效</div>
-                <div class="sound-pill" data-edit-target="shortBreak">短休音效</div>
-                <div class="sound-pill" data-edit-target="longBreak">长休音效</div>
-            </div>
-
-            <div class="grid-settings">
-                <div class="setting-card">
-                    <div class="setting-row">
-                        <label>预设风格</label>
-                    </div>
-                    <div class="sound-pills" style="margin: 0 0 15px;">
-                        <div class="sound-pill" onclick="selectPreset('piano')">钢琴</div>
-                        <div class="sound-pill" onclick="selectPreset('bell')">铃铛</div>
-                        <div class="sound-pill" onclick="selectPreset('gong')">铜锣</div>
-                        <div class="sound-pill" onclick="selectPreset('beep')">电子</div>
-                    </div>
-
-                    <div style="margin-bottom:15px;">
-                        <div class="setting-row"><span>音量</span> <span id="val-volume">80%</span></div>
-                        <input type="range" id="volume" min="0" max="100">
-                    </div>
-                    <div style="margin-bottom:15px;">
-                        <div class="setting-row"><span>音高 (Pitch)</span> <span id="val-pitch">中</span></div>
-                        <input type="range" id="pitch" min="0" max="100">
-                    </div>
+            <div class="setting-card">
+                <div class="sound-pills">
+                    <div class="sound-pill active" data-edit-target="work">工作</div>
+                    <div class="sound-pill" data-edit-target="shortBreak">短休</div>
+                    <div class="sound-pill" data-edit-target="longBreak">长休</div>
                 </div>
-
-                <div class="setting-card">
-                    <h3>泛音调节 (Harmonics)</h3>
-                    <div class="setting-row"><small>泛音 1</small> <input type="range" class="harmonic" data-idx="0" min="0" max="100" style="width:60%"></div>
-                    <div class="setting-row"><small>泛音 2</small> <input type="range" class="harmonic" data-idx="1" min="0" max="100" style="width:60%"></div>
-                    <div class="setting-row"><small>泛音 3</small> <input type="range" class="harmonic" data-idx="2" min="0" max="100" style="width:60%"></div>
-                    <div style="text-align:center; margin-top:10px;">
-                         <button class="btn-secondary" style="padding:8px 20px; border-radius:20px; font-size:0.85rem; width:100%" id="test-sound-btn">▶ 试听音效</button>
-                    </div>
+                <div class="sound-pills">
+                    <div class="sound-pill" onclick="selectPreset('piano')">钢琴</div>
+                    <div class="sound-pill" onclick="selectPreset('bell')">铃铛</div>
+                    <div class="sound-pill" onclick="selectPreset('gong')">铜锣</div>
                 </div>
+                <div class="setting-row" style="margin-top:15px;">
+                    <span>音量</span> <span id="val-volume">80%</span>
+                </div>
+                <input type="range" id="volume" min="0" max="100">
             </div>
+            <button class="btn btn-secondary" style="width:100%; margin-top:15px; padding:10px;" id="test-sound-btn">试听音效</button>
         </div>
 
-        <div style="margin-top: 30px; text-align: center; font-size: 0.8rem; color: var(--text-muted); opacity: 0.7;">
-            专注次数: <span id="session-count">0</span> | 状态: <span id="current-mode-text">工作</span>
+        <div style="text-align: center; margin-top: 20px; font-size: 0.8rem; color: var(--text-muted); opacity: 0.6;">
+            专注次数: <span id="session-count">0</span>
         </div>
     </div>
 
-    <div class="notification" id="notification">提示信息</div>
-
-    <script id="worker-script" type="javascript/worker">
-        let timerId;
-        self.onmessage = function(e) {
-            if (e.data === 'start') {
-                // 使用 setInterval 在 Worker 线程中计时，避免主线程被挂起
-                timerId = setInterval(() => {
-                    postMessage('tick');
-                }, 1000);
-            } else if (e.data === 'stop') {
-                clearInterval(timerId);
-            }
-        };
-    </script>
+    <div class="notification" id="notification"></div>
 
     <script>
-        /**
-         * 核心变量与状态
-         */
+        // ================== 核心计时与保活逻辑 ==================
+        
         let audioContext;
+        let wakeLock = null;
+        let timerInterval;
+        let targetEndTime = 0; // 目标结束时间戳 (核心修正机制)
+        
+        // 状态变量
+        let isRunning = false;
+        let currentDuration = 90 * 60;
+        let timeLeft = 90 * 60;
+        let currentSessionType = 'work'; // work, shortBreak, longBreak
+        let promptTimeTarget = -1;
         let soundEnabled = true;
         let editingSoundType = 'work';
-        let currentSessionType = 'work';
-        let wakeLock = null; // 屏幕唤醒锁
 
-        // 初始化 Web Worker
-        const workerBlob = new Blob([document.getElementById('worker-script').textContent], { type: "text/javascript" });
-        const timerWorker = new Worker(URL.createObjectURL(workerBlob));
-
-        const defaultSoundParams = {
-            work: { type: 'piano', volume: 80, pitch: 50, decay: 60, brightness: 70, harmonics: [40, 30, 20, 10] },
-            shortBreak: { type: 'bell', volume: 70, pitch: 75, decay: 40, brightness: 80, harmonics: [30, 20, 10, 5] },
-            longBreak: { type: 'gong', volume: 90, pitch: 30, decay: 90, brightness: 60, harmonics: [50, 40, 30, 20] }
+        // 配置与DOM
+        const els = {
+            timer: document.getElementById('timer'),
+            progressBar: document.getElementById('progress-bar'),
+            status: document.getElementById('status'),
+            startBtn: document.getElementById('start-btn'),
+            silentPlayer: document.getElementById('silent-player') // 核心保活元素
         };
 
-        // 默认设置：90分钟工作，20分钟休息
-        let appState = {
-            soundParams: JSON.parse(JSON.stringify(defaultSoundParams)),
-            settings: {
-                workTime: 90,
-                restTime: 20,
-                minPrompt: 3,
-                maxPrompt: 5
+        const appState = {
+            settings: { workTime: 90, restTime: 20, minPrompt: 3, maxPrompt: 5 },
+            soundParams: {
+                work: { type: 'piano', volume: 80, pitch: 50, harmonics: [40, 30, 20] },
+                shortBreak: { type: 'bell', volume: 70, pitch: 75, harmonics: [30, 20, 10] },
+                longBreak: { type: 'gong', volume: 90, pitch: 30, harmonics: [50, 40, 30] }
             },
             stats: { sessionCount: 0 }
         };
 
-        let isRunning = false;
-        let timeLeft = 0;
-        let totalTime = 0;
-        let promptTimeTarget = 0;
-
-        // DOM 元素
-        const els = {
-            timer: document.getElementById('timer'),
-            status: document.getElementById('status'),
-            progressBar: document.getElementById('progress-bar'),
-            progressContainer: document.getElementById('progress-container'),
-            startBtn: document.getElementById('start-btn'),
-            resetBtn: document.getElementById('reset-btn'),
-            muteBtn: document.getElementById('mute-btn'),
-            notification: document.getElementById('notification'),
-            inputs: {
-                work: document.getElementById('work-time'),
-                rest: document.getElementById('rest-time'),
-                minP: document.getElementById('min-prompt'),
-                maxP: document.getElementById('max-prompt')
-            },
-            soundControls: {
-                volume: document.getElementById('volume'),
-                pitch: document.getElementById('pitch'),
-                harmonics: document.querySelectorAll('.harmonic')
-            }
-        };
-
-        /**
-         * 初始化
-         */
         function init() {
             loadSettings();
-            updateTimerUI(appState.settings.workTime * 60, appState.settings.workTime * 60);
-            timeLeft = appState.settings.workTime * 60;
-            totalTime = timeLeft;
-
+            updateDisplay();
             bindEvents();
-            updateSoundEditorUI();
+            // 初始化时申请 WakeLock (虽然点击时申请更稳，但这里先尝试)
+            requestWakeLock();
         }
 
-        function loadSettings() {
-            const saved = localStorage.getItem('focusTimerState_Pro');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if(parsed.settings) appState.settings = {...appState.settings, ...parsed.settings};
-                if(parsed.soundParams) appState.soundParams = parsed.soundParams;
-                if(parsed.stats) appState.stats = parsed.stats;
-            }
-            // 同步到 UI
-            els.inputs.work.value = appState.settings.workTime;
-            els.inputs.rest.value = appState.settings.restTime;
-            els.inputs.minP.value = appState.settings.minPrompt;
-            els.inputs.maxP.value = appState.settings.maxPrompt;
-            document.getElementById('session-count').textContent = appState.stats.sessionCount;
-        }
-
-        function saveSettings() {
-            localStorage.setItem('focusTimerState_Pro', JSON.stringify(appState));
-        }
-
-        /**
-         * 屏幕常亮控制 (Wake Lock API)
-         * 这是手机端息屏也能运行的关键辅助（防止系统杀后台）
-         */
-        async function requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('屏幕唤醒锁已激活');
-                }
-            } catch (err) {
-                console.log('Wake Lock Error:', err);
-            }
-        }
-
-        function releaseWakeLock() {
-            if (wakeLock !== null) {
-                wakeLock.release();
-                wakeLock = null;
-            }
-        }
-
-        /**
-         * 音频上下文初始化 (必须在用户点击时触发)
-         */
-        function initAudioContext() {
-            if (!audioContext) {
-                try {
-                    window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                    audioContext = new AudioContext();
-                    // 播放一个极短的静音以解锁 iOS 音频限制
-                    const buffer = audioContext.createBuffer(1, 1, 22050);
-                    const source = audioContext.createBufferSource();
-                    source.buffer = buffer;
-                    source.connect(audioContext.destination);
-                    source.start(0);
-                } catch (e) {
-                    console.error(e);
-                }
-            } else if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-        }
-
-        /**
-         * 事件绑定
-         */
         function bindEvents() {
-            // Worker 消息监听 (代替 setInterval)
-            timerWorker.onmessage = function(e) {
-                if (e.data === 'tick') {
-                    tick();
-                }
-            };
-
             els.startBtn.addEventListener('click', () => {
-                initAudioContext(); // 激活音频
-                toggleTimer();
+                if (isRunning) pauseTimer();
+                else startTimer();
             });
-
-            els.resetBtn.addEventListener('click', resetTimer);
-            els.muteBtn.addEventListener('click', () => {
-                soundEnabled = !soundEnabled;
-                els.muteBtn.textContent = soundEnabled ? "🔊" : "🔇";
-                showNotification(soundEnabled ? "声音开启" : "静音模式");
+            
+            document.getElementById('reset-btn').addEventListener('click', resetTimer);
+            
+            // 绑定设置输入
+            document.getElementById('work-time').addEventListener('change', (e) => {
+                appState.settings.workTime = parseInt(e.target.value);
+                if (!isRunning && currentSessionType === 'work') {
+                    currentDuration = appState.settings.workTime * 60;
+                    timeLeft = currentDuration;
+                    updateDisplay();
+                }
+                saveSettings();
             });
+            document.getElementById('rest-time').addEventListener('change', (e) => {
+                appState.settings.restTime = parseInt(e.target.value);
+                saveSettings();
+            });
+            
+            // 进度条拖拽
+            const progressContainer = document.getElementById('progress-container');
+            const handleDrag = (e) => {
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const rect = progressContainer.getBoundingClientRect();
+                let pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                
+                // 拖拽时更新目标时间
+                const newTimeLeft = Math.floor(currentDuration * (1 - pct));
+                
+                // 如果正在运行，需要同时调整目标结束时间戳，否则松手后会跳回去
+                if (isRunning) {
+                    targetEndTime = Date.now() + newTimeLeft * 1000;
+                }
+                timeLeft = newTimeLeft;
+                updateDisplay();
+            };
+            progressContainer.addEventListener('touchstart', (e) => { e.preventDefault(); handleDrag(e); document.addEventListener('touchmove', handleDrag); });
+            document.addEventListener('touchend', () => document.removeEventListener('touchmove', handleDrag));
+            progressContainer.addEventListener('mousedown', (e) => { handleDrag(e); document.addEventListener('mousemove', handleDrag); });
+            document.addEventListener('mouseup', () => document.removeEventListener('mousemove', handleDrag));
 
-            // 面板折叠
+            // 面板切换
             document.querySelectorAll('.toggle-text').forEach(el => {
                 el.addEventListener('click', () => {
-                    const targetId = el.dataset.target;
-                    const targetPanel = document.getElementById(targetId);
-                    const isActive = targetPanel.style.display === 'block';
-
-                    document.querySelectorAll('.collapsible-panel').forEach(p => p.style.display = 'none');
                     document.querySelectorAll('.toggle-text').forEach(t => t.classList.remove('active'));
-
-                    if (!isActive) {
-                        targetPanel.style.display = 'block';
-                        el.classList.add('active');
-                    }
+                    document.querySelectorAll('.collapsible-panel').forEach(p => p.classList.remove('active'));
+                    el.classList.add('active');
+                    document.getElementById(el.dataset.target).classList.add('active');
                 });
             });
-
-            // 设置变更
-            Object.values(els.inputs).forEach(input => {
-                input.addEventListener('change', updateTimeSettings);
-            });
-
-            // 音色编辑
-            document.querySelectorAll('[data-edit-target]').forEach(pill => {
-                pill.addEventListener('click', () => {
-                    document.querySelectorAll('[data-edit-target]').forEach(p => p.classList.remove('active'));
-                    pill.classList.add('active');
-                    editingSoundType = pill.dataset.editTarget;
-                    updateSoundEditorUI();
-                });
-            });
-
-            // 滑块实时更新
-            [els.soundControls.volume, els.soundControls.pitch, ...els.soundControls.harmonics].forEach(input => {
-                input.addEventListener('input', () => {
-                    const params = appState.soundParams[editingSoundType];
-                    params.volume = parseInt(els.soundControls.volume.value);
-                    params.pitch = parseInt(els.soundControls.pitch.value);
-                    els.soundControls.harmonics.forEach((h, i) => params.harmonics[i] = parseInt(h.value));
-
-                    document.getElementById('val-volume').textContent = params.volume + '%';
-                    saveSettings();
-                });
+            
+            // 音量调节
+            const volInput = document.getElementById('volume');
+            volInput.addEventListener('input', (e) => {
+                appState.soundParams[editingSoundType].volume = e.target.value;
+                document.getElementById('val-volume').textContent = e.target.value + '%';
+                saveSettings();
             });
 
             document.getElementById('test-sound-btn').addEventListener('click', () => {
@@ -621,292 +338,299 @@
                 playSound(editingSoundType);
             });
 
-            // 拖拽进度条 (支持 Touch 事件)
-            const handleDrag = (e) => {
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const rect = els.progressContainer.getBoundingClientRect();
-                let pct = (clientX - rect.left) / rect.width;
-                pct = Math.max(0, Math.min(1, pct));
-                timeLeft = Math.floor(totalTime * (1 - pct));
-                updateTimerUI(timeLeft, totalTime);
-            };
-
-            els.progressContainer.addEventListener('mousedown', (e) => {
-                document.addEventListener('mousemove', handleDrag);
-                document.addEventListener('mouseup', () => document.removeEventListener('mousemove', handleDrag), {once:true});
-                handleDrag(e);
+            // 音效切换
+            document.querySelectorAll('[data-edit-target]').forEach(p => {
+                p.addEventListener('click', () => {
+                    document.querySelectorAll('[data-edit-target]').forEach(i => i.classList.remove('active'));
+                    p.classList.add('active');
+                    editingSoundType = p.dataset.editTarget;
+                    volInput.value = appState.soundParams[editingSoundType].volume;
+                    document.getElementById('val-volume').textContent = volInput.value + '%';
+                });
             });
-
-            els.progressContainer.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // 防止滚动
-                document.addEventListener('touchmove', handleDrag, {passive: false});
-                document.addEventListener('touchend', () => document.removeEventListener('touchmove', handleDrag), {once:true});
-                handleDrag(e);
-            }, {passive: false});
         }
 
-        function updateTimeSettings() {
-            appState.settings.workTime = parseInt(els.inputs.work.value);
-            appState.settings.restTime = parseInt(els.inputs.rest.value);
-            appState.settings.minPrompt = parseInt(els.inputs.minP.value);
-            appState.settings.maxPrompt = parseInt(els.inputs.maxP.value);
-            saveSettings();
-            if (!isRunning) resetTimer();
-        }
-
-        /**
-         * 计时逻辑 (由 Worker 驱动)
-         */
-        function toggleTimer() {
-            if (isRunning) {
-                pauseTimer();
-            } else {
-                startTimer();
-            }
-        }
+        // ================== 核心计时逻辑 (防漂移版) ==================
 
         function startTimer() {
-            isRunning = true;
-            els.startBtn.textContent = "暂停";
-            els.startBtn.classList.add('active');
-            document.body.classList.add('focus-mode');
-
-            // 申请屏幕常亮 (移动端关键)
+            // 1. 启动静音音频 (移动端保活关键)
+            els.silentPlayer.play().catch(e => console.log("静音播放失败(需交互):", e));
+            
+            // 2. 初始化 WebAudio
+            initAudioContext();
+            
+            // 3. 申请屏幕唤醒锁
             requestWakeLock();
 
-            if (currentSessionType === 'work' && promptTimeTarget === 0) {
+            isRunning = true;
+            document.body.classList.add('focus-mode');
+            els.startBtn.textContent = "暂停";
+            els.startBtn.style.background = "rgba(255,255,255,0.1)"; // 视觉反馈
+            
+            // 4. 设定目标时间戳 (当前时间 + 剩余毫秒)
+            targetEndTime = Date.now() + (timeLeft * 1000);
+            
+            // 5. 如果是工作模式且未设定随机提示，设定一个
+            if (currentSessionType === 'work' && promptTimeTarget === -1) {
                 scheduleNextPrompt();
             }
 
-            // 启动 Worker
-            timerWorker.postMessage('start');
+            // 6. 启动计时器 (高频检测，自适应修正)
+            clearInterval(timerInterval);
+            timerInterval = setInterval(tick, 200); // 每200ms检查一次，比1秒更丝滑
         }
 
         function pauseTimer() {
             isRunning = false;
-            timerWorker.postMessage('stop'); // 停止 Worker
-            releaseWakeLock(); // 释放屏幕常亮
-            els.startBtn.textContent = "继续";
+            clearInterval(timerInterval);
+            els.silentPlayer.pause(); // 暂停保活音频
             document.body.classList.remove('focus-mode');
-            document.title = "专注计时器 Pro";
+            els.startBtn.textContent = "继续";
+            els.startBtn.style.background = "";
         }
 
         function resetTimer() {
             pauseTimer();
             currentSessionType = 'work';
-            timeLeft = appState.settings.workTime * 60;
-            totalTime = timeLeft;
-            promptTimeTarget = 0;
+            currentDuration = appState.settings.workTime * 60;
+            timeLeft = currentDuration;
+            promptTimeTarget = -1;
+            updateStatusText();
+            updateDisplay();
             els.startBtn.textContent = "开始专注";
-            updateTimerUI(timeLeft, totalTime);
-            updateStatusUI();
         }
 
-        // 每一秒执行一次 (Worker 触发)
         function tick() {
-            timeLeft--;
-            updateTimerUI(timeLeft, totalTime);
+            const now = Date.now();
+            // 使用差值计算，即使息屏1小时，唤醒后也会瞬间算出正确时间
+            const remainingSeconds = Math.ceil((targetEndTime - now) / 1000);
 
-            // 随机提示
-            if (currentSessionType === 'work' && timeLeft === promptTimeTarget) {
-                triggerShortBreak();
-            }
-
-            // 结束
-            if (timeLeft <= 0) {
-                switchPhase();
+            if (remainingSeconds !== timeLeft) {
+                timeLeft = remainingSeconds;
+                updateDisplay();
+                
+                // 随机提示逻辑
+                if (currentSessionType === 'work' && timeLeft === promptTimeTarget) {
+                    triggerShortBreak();
+                }
+                
+                // 倒计时结束
+                if (timeLeft <= 0) {
+                    handlePhaseComplete();
+                }
             }
         }
 
-        function switchPhase() {
-            timerWorker.postMessage('stop'); // 先暂停
-
+        function handlePhaseComplete() {
+            clearInterval(timerInterval);
+            
             if (currentSessionType === 'work') {
                 playSound('longBreak');
-                showNotification("专注结束，开始休息");
+                showNotification("专注结束，开始休息！");
                 appState.stats.sessionCount++;
                 document.getElementById('session-count').textContent = appState.stats.sessionCount;
                 saveSettings();
-
+                
                 currentSessionType = 'longBreak';
-                timeLeft = appState.settings.restTime * 60;
+                currentDuration = appState.settings.restTime * 60;
+                
             } else {
                 playSound('work');
-                showNotification("休息结束，开始工作");
+                showNotification("休息结束，开始专注！");
                 currentSessionType = 'work';
-                timeLeft = appState.settings.workTime * 60;
-                promptTimeTarget = 0;
-                scheduleNextPrompt();
+                currentDuration = appState.settings.workTime * 60;
+                promptTimeTarget = -1;
             }
-
-            totalTime = timeLeft;
-            updateStatusUI();
-
-            // 稍微延迟后自动开始下一阶段
-            setTimeout(() => {
-                timerWorker.postMessage('start');
-            }, 1000);
+            
+            timeLeft = currentDuration;
+            updateStatusText();
+            updateDisplay();
+            
+            // 自动开始下一阶段 (保持后台运行)
+            setTimeout(() => startTimer(), 1000); 
         }
 
         function triggerShortBreak() {
-            timerWorker.postMessage('stop');
+            // 暂停主计时
+            const savedEndTime = targetEndTime;
+            clearInterval(timerInterval);
+            
             playSound('shortBreak');
-            createFloatingNote("☕");
-            showNotification("放松 10 秒钟...");
-
-            const prevType = currentSessionType;
-            const prevTime = timeLeft;
-            const prevTotal = totalTime;
-
-            currentSessionType = 'shortBreak';
-            timeLeft = 10;
-            totalTime = 10;
-            updateStatusUI();
-
-            // 启动10秒倒计时
-            let breakInterval = setInterval(() => {
-                timeLeft--;
-                updateTimerUI(timeLeft, totalTime);
-                if (timeLeft <= 0) {
-                    clearInterval(breakInterval);
-                    // 恢复
-                    currentSessionType = prevType;
-                    timeLeft = prevTime;
-                    totalTime = prevTotal;
+            showNotification("放松一下...");
+            
+            let breakLeft = 10;
+            const tempDuration = 10;
+            
+            // 临时切换UI
+            els.status.textContent = "放松 10 秒";
+            els.status.className = "status-badge short-break";
+            
+            // 短休息也使用时间戳逻辑，防止息屏卡住
+            const breakEnd = Date.now() + 10000;
+            
+            const breakInt = setInterval(() => {
+                const now = Date.now();
+                breakLeft = Math.ceil((breakEnd - now) / 1000);
+                
+                els.timer.textContent = `00:${breakLeft.toString().padStart(2, '0')}`;
+                els.progressBar.style.width = `${((tempDuration - breakLeft) / tempDuration) * 100}%`;
+                
+                if (breakLeft <= 0) {
+                    clearInterval(breakInt);
                     playSound('work');
-                    updateStatusUI();
+                    updateStatusText();
+                    
+                    // 恢复主计时：此时要注意，我们“暂停”了10秒，所以目标结束时间要顺延10秒
+                    targetEndTime = savedEndTime + 10000; 
+                    
+                    // 重新计算新的提示时间
                     scheduleNextPrompt();
-                    timerWorker.postMessage('start'); // 恢复主计时
+                    
+                    // 恢复主循环
+                    timerInterval = setInterval(tick, 200);
                 }
-            }, 1000);
+            }, 200);
         }
 
         function scheduleNextPrompt() {
-            const min = appState.settings.minPrompt * 60;
-            const max = appState.settings.maxPrompt * 60;
-            const interval = Math.floor(Math.random() * (max - min + 1)) + min;
-            if (timeLeft - interval > 60) promptTimeTarget = timeLeft - interval;
-            else promptTimeTarget = -1;
+            const min = parseInt(document.getElementById('min-prompt').value) * 60;
+            const max = parseInt(document.getElementById('max-prompt').value) * 60;
+            if (timeLeft > max + 60) {
+                const interval = Math.floor(Math.random() * (max - min + 1)) + min;
+                promptTimeTarget = timeLeft - interval;
+            } else {
+                promptTimeTarget = -2; // 不再提示
+            }
         }
 
-        /**
-         * UI 更新
-         */
-        function updateTimerUI(seconds, total) {
-            if (seconds < 0) seconds = 0;
-            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
+        // ================== 辅助功能 ==================
+
+        function updateDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
             els.timer.textContent = `${m}:${s}`;
+            const pct = Math.max(0, Math.min(100, ((currentDuration - timeLeft) / currentDuration) * 100));
+            els.progressBar.style.width = `${pct}%`;
+            els.progressBar.querySelector('.progress-handle').style.right = `${-12}px`; // 简单修正
+            
+            if (isRunning) document.title = `${m}:${s} - ${currentSessionType === 'work' ? '专注' : '休息'}`;
+        }
 
-            if (isRunning) {
-                const icon = currentSessionType === 'work' ? '💻' : '☕';
-                document.title = `${m}:${s} ${icon}`;
+        function updateStatusText() {
+            const map = { work: '专注中', shortBreak: '短休', longBreak: '长休' };
+            const cls = { work: 'work', shortBreak: 'short-break', longBreak: 'long-break' };
+            els.status.textContent = map[currentSessionType];
+            els.status.className = `status-badge ${cls[currentSessionType]}`;
+        }
+
+        // Wake Lock (屏幕常亮)
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) { console.log('Wake Lock 失败', err); }
+        }
+
+        // Web Audio 播放
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-
-            const progress = total > 0 ? ((total - seconds) / total) * 100 : 0;
-            els.progressBar.style.width = `${progress}%`;
+            if (audioContext.state === 'suspended') audioContext.resume();
         }
 
-        function updateStatusUI() {
-            els.status.className = 'status-badge ' + (currentSessionType === 'work' ? 'work' : (currentSessionType === 'shortBreak' ? 'short-break' : 'long-break'));
-            const texts = { work: '专注工作', shortBreak: '快速放松', longBreak: '休息时间' };
-            els.status.textContent = texts[currentSessionType];
-            document.getElementById('current-mode-text').textContent = texts[currentSessionType];
-        }
-
-        function updateSoundEditorUI() {
-            const params = appState.soundParams[editingSoundType];
-            els.soundControls.volume.value = params.volume;
-            els.soundControls.pitch.value = params.pitch;
-            document.getElementById('val-volume').textContent = params.volume + '%';
-            els.soundControls.harmonics.forEach((h, i) => {
-                if(params.harmonics[i] !== undefined) h.value = params.harmonics[i];
-            });
-        }
-
-        function showNotification(msg) {
-            els.notification.textContent = msg;
-            els.notification.classList.add('show');
-            setTimeout(() => els.notification.classList.remove('show'), 2500);
-        }
-
-        function createFloatingNote(char) {
-            const note = document.createElement('div');
-            note.className = 'floating-note';
-            note.textContent = char;
-            note.style.left = Math.random() * 60 + 20 + '%';
-            note.style.top = '50%';
-            note.style.color = `hsl(${Math.random()*360}, 80%, 70%)`;
-            document.body.appendChild(note);
-            setTimeout(() => note.remove(), 4000);
-        }
-
-        // 预设选择
-        window.selectPreset = function(type) {
-            const presets = {
-                piano: { pitch: 50, decay: 60, brightness: 70, harmonics: [40, 30, 20, 10] },
-                bell: { pitch: 75, decay: 40, brightness: 85, harmonics: [30, 20, 10, 5] },
-                gong: { pitch: 30, decay: 90, brightness: 60, harmonics: [50, 40, 30, 20] },
-                beep: { pitch: 60, decay: 20, brightness: 90, harmonics: [0, 0, 0, 0] }
-            };
-            if (presets[type]) {
-                Object.assign(appState.soundParams[editingSoundType], presets[type], { type });
-                updateSoundEditorUI();
-                initAudioContext();
-                playSound(editingSoundType);
-                saveSettings();
-            }
-        };
-
-        /**
-         * 声音播放引擎 (保持不变)
-         */
-        function playSound(typeKey) {
-            if (!soundEnabled || !audioContext) return;
-            const params = appState.soundParams[typeKey];
+        function playSound(type) {
+            if (!audioContext) initAudioContext();
+            const params = appState.soundParams[type];
+            
             const now = audioContext.currentTime;
-            const vol = params.volume / 100;
-            const pitchMult = 0.5 + (params.pitch / 100) * 1.5;
-            const decay = 0.5 + (params.decay / 100) * 3.0;
-
             const osc = audioContext.createOscillator();
             const gain = audioContext.createGain();
-
-            osc.type = params.type === 'beep' ? 'square' : (params.type === 'gong' ? 'sine' : 'triangle');
+            
+            osc.type = params.type === 'bell' ? 'sine' : (params.type === 'gong' ? 'sine' : 'triangle');
             if (params.type === 'piano') osc.type = 'sine';
 
-            let baseFreq = 440 * pitchMult;
-            if (params.type === 'gong') baseFreq = 150 * pitchMult;
-            if (params.type === 'bell') baseFreq = 800 * pitchMult;
+            // 简单频率映射
+            let freq = 440; 
+            if (params.type === 'gong') freq = 150;
+            if (params.type === 'bell') freq = 800;
+            freq *= (0.5 + params.pitch/100);
 
-            osc.frequency.setValueAtTime(baseFreq, now);
+            osc.frequency.setValueAtTime(freq, now);
+            
+            const vol = params.volume / 100;
             gain.gain.setValueAtTime(0, now);
             gain.gain.linearRampToValueAtTime(vol, now + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + decay);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0); // 统一衰减
 
             osc.connect(gain);
             gain.connect(audioContext.destination);
             osc.start(now);
-            osc.stop(now + decay);
+            osc.stop(now + 2.5);
 
-            if (params.type !== 'beep') {
-                params.harmonics.forEach((hVal, i) => {
-                    if (hVal <= 0) return;
+            // 简单的泛音模拟
+            params.harmonics.forEach((h, i) => {
+                if (h > 0) {
                     const hOsc = audioContext.createOscillator();
                     const hGain = audioContext.createGain();
-                    hOsc.frequency.value = baseFreq * (i + 2);
-                    const hVol = (hVal / 100) * vol;
+                    hOsc.frequency.value = freq * (i + 2);
                     hGain.gain.setValueAtTime(0, now);
-                    hGain.gain.linearRampToValueAtTime(hVol, now + 0.05);
-                    hGain.gain.exponentialRampToValueAtTime(0.001, now + decay * 0.8);
+                    hGain.gain.linearRampToValueAtTime(vol * (h/100), now + 0.05);
+                    hGain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
                     hOsc.connect(hGain);
                     hGain.connect(audioContext.destination);
                     hOsc.start(now);
-                    hOsc.stop(now + decay);
-                });
+                    hOsc.stop(now + 2.5);
+                }
+            });
+        }
+
+        // 配置存取
+        function loadSettings() {
+            const saved = localStorage.getItem('timer_pro_bg_fix');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.settings) appState.settings = data.settings;
+                if (data.soundParams) appState.soundParams = data.soundParams;
+                if (data.stats) appState.stats = data.stats;
+            }
+            
+            // 同步UI
+            document.getElementById('work-time').value = appState.settings.workTime;
+            document.getElementById('rest-time').value = appState.settings.restTime;
+            document.getElementById('min-prompt').value = appState.settings.minPrompt;
+            document.getElementById('max-prompt').value = appState.settings.maxPrompt;
+            document.getElementById('session-count').textContent = appState.stats.sessionCount;
+            currentDuration = appState.settings.workTime * 60;
+            timeLeft = currentDuration;
+        }
+
+        function saveSettings() {
+            localStorage.setItem('timer_pro_bg_fix', JSON.stringify(appState));
+        }
+
+        // 预设选择
+        window.selectPreset = function(preset) {
+            const presets = {
+                piano: { type:'piano', pitch: 50, harmonics: [40,30,20] },
+                bell: { type:'bell', pitch: 80, harmonics: [30,20,10] },
+                gong: { type:'gong', pitch: 20, harmonics: [60,50,40] }
+            };
+            if (presets[preset]) {
+                Object.assign(appState.soundParams[editingSoundType], presets[preset]);
+                showNotification(`已应用 ${preset} 音色`);
+                saveSettings();
             }
         }
 
+        function showNotification(msg) {
+            const el = document.getElementById('notification');
+            el.textContent = msg; el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 2000);
+        }
+
+        // 初始化
         window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
